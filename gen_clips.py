@@ -164,6 +164,24 @@ def generate(clip: dict):
     return clip["name"], res, dt
 
 
+def run_missing(targets: list[dict]) -> dict:
+    """Generate a subset of CLIPS (the missing ones) and return {name: 'ok'|'fail:..'}."""
+    results: dict = {}
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        futs = {ex.submit(generate, c): c["name"] for c in targets}
+        for fut in as_completed(futs):
+            name, res, dt = fut.result()
+            if res.success:
+                d = res.data or {}
+                print(f"  [OK]   {name}  {dt}s  -> {d.get('output')}  "
+                      f"({d.get('duration_seconds')}s video)")
+                results[name] = "ok"
+            else:
+                print(f"  [FAIL] {name}  {dt}s  -> {res.error}")
+                results[name] = f"fail: {res.error}"
+    return results
+
+
 def main():
     print(f"Launching {len(CLIPS)} Seedance clips (concurrent) -> {OUT}")
     results = {}

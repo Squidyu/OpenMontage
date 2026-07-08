@@ -24,10 +24,20 @@ FT_TITLE = r"'C\:\\Windows\\Fonts\\STXINGKA.TTF'"   # 华文行楷
 FT_BODY = r"'C\:\\Windows\\Fonts\\STKAITI.TTF'"     # 华文楷体
 XF = 0.6
 
-clips = [OUT / f"clip_{i:02d}.mp4" for i in range(1, 8)]
-for c in clips:
-    if not c.exists():
-        raise SystemExit(f"missing clip: {c}")
+def clip_path(i: int) -> Path:
+    real = OUT / f"clip_{i:02d}.mp4"
+    if real.exists():
+        return real
+    proxy = OUT / f"clip_{i:02d}_proxy.mp4"
+    if proxy.exists():
+        return proxy
+    raise SystemExit(f"missing clip_{i:02d}.mp4 and no proxy")
+
+
+clips = [clip_path(i) for i in range(1, 8)]
+for i, c in enumerate(clips, start=1):
+    tag = "REAL" if c.name == f"clip_{i:02d}.mp4" else "PROXY"
+    print(f"  beat {i:02d}: {tag} {c.name}")
 
 
 def probe_dur(p: Path) -> float:
